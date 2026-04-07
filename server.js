@@ -13,19 +13,43 @@ const PORT = process.env.PORT || 3302;
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'sikatech';
 
 // ── Affirmations ──
+const TOTAL_QUESTIONS = 21;
+
 const AFFIRMATIONS = [
+  // 1. Le Micro-Manager — déguisé en "rigueur / qualité"
   { text: "Je préfère que les devs me montrent leur approche technique avant de commencer à coder — ça évite de perdre du temps.", category: "micro" },
   { text: "Quand un dev choisit une approche différente de la mienne, je prends le temps de lui expliquer pourquoi la mienne est meilleure.", category: "micro" },
   { text: "Je relis toujours les PR en détail, même quand un autre dev a déjà approuvé.", category: "micro" },
+
+  // 2. L'Éviteur / Le Sauveur — déguisé en "pragmatisme / efficacité"
   { text: "Sur un sujet urgent, le plus efficace c'est que la personne la plus compétente s'en charge — et souvent c'est moi.", category: "eviteur" },
   { text: "Former quelqu'un sur une tâche prend plus de temps que la faire soi-même, donc ce n'est pas toujours rentable.", category: "eviteur" },
   { text: "Certaines parties du code sont trop critiques pour être confiées à quelqu'un qui ne les connaît pas aussi bien que moi.", category: "eviteur" },
-  { text: "Faire confiance, c'est laisser les gens travailler sans leur mettre la pression avec des points intermédiaires.", category: "lacheur" },
-  { text: "Un bon dev n'a pas besoin qu'on lui explique le contexte business — un ticket bien rédigé suffit.", category: "lacheur" },
-  { text: "Je ne veux pas infantiliser mon équipe en leur demandant où ils en sont tous les jours.", category: "lacheur" },
-  { text: "Avant de déléguer, je me demande si la personne a les moyens de réussir — sinon je l'accompagne plutôt que de la laisser galérer.", category: "efficace" },
-  { text: "Je n'hésite pas à confier une tâche importante à un junior si je pense que c'est une bonne opportunité d'apprentissage pour lui.", category: "efficace" },
-  { text: "Quand je délègue, je précise le résultat attendu mais je laisse la personne choisir comment y arriver.", category: "efficace" },
+
+  // 3. Le Fantôme — déguisé en "confiance / autonomie"
+  { text: "Faire confiance, c'est laisser les gens travailler sans leur mettre la pression avec des points intermédiaires.", category: "fantome" },
+  { text: "Un bon dev n'a pas besoin qu'on lui explique le contexte business — un ticket bien rédigé suffit.", category: "fantome" },
+  { text: "Je ne veux pas infantiliser mon équipe en leur demandant où ils en sont tous les jours.", category: "fantome" },
+
+  // 4. Le Lanceur de Patate — déguisé en "rapidité / efficacité opérationnelle"
+  { text: "L'important c'est que la tâche soit assignée rapidement — les détails se clarifient en cours de route.", category: "patate" },
+  { text: "Je n'ai pas besoin de rédiger un brief détaillé pour chaque tâche — un message Slack avec le ticket suffit.", category: "patate" },
+  { text: "Si le dev a des questions, il peut toujours venir me voir — pas besoin de tout anticiper.", category: "patate" },
+
+  // 5. Le Délégateur de Corvées — déguisé en "protéger l'équipe / être stratégique"
+  { text: "Je garde les features visibles pour moi parce que le client attend un niveau de qualité que je suis le seul à garantir.", category: "corvees" },
+  { text: "Les tâches répétitives ou de maintenance, c'est un bon moyen pour les juniors d'apprendre le projet.", category: "corvees" },
+  { text: "Je préfère assigner les sujets techniques intéressants aux devs qui les méritent — ceux qui ont fait leurs preuves.", category: "corvees" },
+
+  // 6. Le One-Size-Fits-All — déguisé en "équité / cohérence"
+  { text: "Pour être juste, je délègue de la même façon à tout le monde — pas de traitement de faveur.", category: "uniforme" },
+  { text: "Tout le monde dans l'équipe devrait être capable de travailler en autonomie — c'est la base.", category: "uniforme" },
+  { text: "Je donne les mêmes consignes à un junior et à un senior — l'objectif est le même pour tous.", category: "uniforme" },
+
+  // 7. Le Faux Délégateur — déguisé en "garder la cohérence / éviter les erreurs"
+  { text: "Je délègue la réalisation mais je préfère valider chaque décision technique pour garder la cohérence du projet.", category: "faux" },
+  { text: "Quand je confie une tâche, je demande au dev de me soumettre ses choix avant d'avancer — c'est plus sûr.", category: "faux" },
+  { text: "Le dev peut implémenter, mais les décisions d'architecture restent les miennes, même sur des sujets mineurs.", category: "faux" },
 ];
 
 const PROFILS = {
@@ -33,39 +57,82 @@ const PROFILS = {
     nom: "Le Micro-Manager",
     emoji: "🔍",
     couleur: "#C0392B",
+    piege: "Piège 1 — Le micro-management",
     description: "Tu as du mal à lâcher le contrôle. Tu veux que tout soit fait comme tu l'aurais fait, et tu vérifies souvent l'avancement. Résultat : ton équipe attend tes instructions et perd en autonomie.",
     conseil: "Challenge-toi : pour ta prochaine délégation, fixe UN seul point de contrôle intermédiaire (pas plus). Laisse le dev choisir son approche, et juge le résultat — pas la méthode.",
   },
   eviteur: {
-    nom: "L'Éviteur",
+    nom: "L'Éviteur / Le Sauveur",
     emoji: "🏃",
     couleur: "#E67E22",
-    description: "Tu préfères faire toi-même plutôt que d'investir du temps à expliquer. Tu penses gagner du temps, mais tu deviens le goulot d'étranglement de l'équipe. Tu fais tout, l'équipe ne progresse pas.",
-    conseil: "Accepte que déléguer prend du temps MAINTENANT pour en gagner PLUS TARD. Commence par déléguer une tâche simple cette semaine, avec un brief de 10 minutes.",
+    piege: "Piège 2 — Reprendre la tâche au premier obstacle",
+    description: "Tu préfères faire toi-même plutôt que d'investir du temps à expliquer. Au premier blocage, tu reprends la tâche. Tu penses gagner du temps, mais tu deviens le goulot d'étranglement. L'équipe ne progresse pas.",
+    conseil: "Accepte que déléguer prend du temps MAINTENANT pour en gagner PLUS TARD. Quand un dev bloque, guide-le avec des questions plutôt que de reprendre la tâche.",
   },
-  lacheur: {
-    nom: "Le Lâcheur",
+  fantome: {
+    nom: "Le Fantôme",
     emoji: "👻",
     couleur: "#8E44AD",
-    description: "Tu délègues facilement, mais sans cadre : pas de contexte, pas de suivi, pas de feedback. Le dev part dans le brouillard et n'ose pas te déranger. Résultat : mauvaises surprises à la deadline.",
-    conseil: "Pour chaque délégation, donne 3 choses : le POURQUOI (contexte), le QUOI (résultat attendu), et le QUAND (deadline + checkpoints).",
+    piege: "Piège 3 — Ne pas suivre du tout",
+    description: "Tu délègues et tu disparais. Pas de suivi, pas de feedback, pas de point intermédiaire. Le dev part dans le brouillard et n'ose pas te déranger. Résultat : mauvaises surprises à la deadline.",
+    conseil: "Mets en place des checkpoints légers (pas du micro-management). Un point de 5 min à mi-parcours peut sauver une semaine de travail mal orienté.",
+  },
+  patate: {
+    nom: "Le Lanceur de Patate",
+    emoji: "🥔",
+    couleur: "#E74C3C",
+    piege: "Piège 4 — Déléguer sans contexte",
+    description: "Tu assignes les tâches vite fait : « Tiens, fais ça. » Pas de contexte, pas d'objectif clair, pas de critère de succès. Le dev part dans la mauvaise direction et perd du temps.",
+    conseil: "Pour chaque délégation, prends 5 minutes pour expliquer : le POURQUOI (contexte business), le QUOI (résultat attendu), le QUAND (deadline) et les CONTRAINTES.",
+  },
+  corvees: {
+    nom: "Le Délégateur de Corvées",
+    emoji: "🗑️",
+    couleur: "#95A5A6",
+    piege: "Piège 5 — Déléguer uniquement les tâches ingrates",
+    description: "Tu gardes les features intéressantes et visibles pour toi, et tu ne délègues que la maintenance, les bugs et la doc. L'équipe se démotive, personne ne progresse, le turnover augmente.",
+    conseil: "Délègue aussi des tâches gratifiantes : une feature visible, une présentation en démo, un choix d'architecture. La motivation vient de la responsabilité, pas juste de l'exécution.",
+  },
+  uniforme: {
+    nom: "Le One-Size-Fits-All",
+    emoji: "📏",
+    couleur: "#3498DB",
+    piege: "Piège 6 — Ne pas adapter à la personne",
+    description: "Tu délègues de la même façon à tout le monde, junior comme senior. Résultat : le junior est perdu car il a besoin de plus de cadrage, et le senior se sent infantilisé par trop de consignes.",
+    conseil: "Adapte ton niveau de délégation : plus de cadrage pour les juniors (niveau 2-3), plus d'autonomie pour les seniors (niveau 4-5). L'équité ce n'est pas l'uniformité.",
+  },
+  faux: {
+    nom: "Le Faux Délégateur",
+    emoji: "🎭",
+    couleur: "#1ABC9C",
+    piege: "Piège 7 — Responsabilité sans autorité",
+    description: "Tu confies la tâche mais pas la décision. Le dev doit te demander la permission pour chaque choix. Résultat : il ne peut pas avancer, frustration des deux côtés, et tu n'as rien gagné.",
+    conseil: "Quand tu délègues, définis un cadre clair (budget, deadline, contraintes) puis laisse la personne décider à l'intérieur de ce cadre. Déléguer = donner l'autorité aussi.",
   },
   efficace: {
     nom: "Le Délégateur Efficace",
     emoji: "🎯",
     couleur: "#27AE60",
-    description: "Tu adaptes ta délégation à la personne, tu donnes du contexte, tu fais confiance tout en restant disponible. Ton équipe est autonome et progresse. Continue comme ça !",
-    conseil: "Ton prochain défi : coache un autre Tech Lead sur la délégation. Partager tes bonnes pratiques te permettra de les ancrer encore plus.",
+    piege: null,
+    description: "Aucun piège ne domine chez toi ! Tu adaptes ta délégation à la personne, tu donnes du contexte, tu fais confiance tout en restant disponible. Ton équipe est autonome et progresse.",
+    conseil: "Continue comme ça. Ton prochain défi : coache un autre Tech Lead sur la délégation. Partager tes bonnes pratiques te permettra de les ancrer encore plus.",
   },
 };
 
+const PIEGE_CATEGORIES = ['micro', 'eviteur', 'fantome', 'patate', 'corvees', 'uniforme', 'faux'];
+
 function computeProfile(answers) {
-  const scores = { micro: 0, eviteur: 0, lacheur: 0, efficace: 0 };
+  const scores = {};
+  for (const cat of PIEGE_CATEGORIES) scores[cat] = 0;
   for (const a of answers) {
     const cat = AFFIRMATIONS[a.question_index].category;
     scores[cat] += a.score;
   }
-  const dominant = Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
+  // Le profil dominant est le piège avec le score le plus élevé
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const maxScore = sorted[0][1];
+  // Si le score max est <= 9 (moyenne de 3/5), on considère "efficace"
+  const dominant = maxScore <= 9 ? 'efficace' : sorted[0][0];
   return { scores, dominant, profil: PROFILS[dominant] };
 }
 
@@ -116,7 +183,7 @@ app.get('/api/admin/:secret/results', (req, res) => {
     results.push({ id: s.id, name: s.name, phone: s.phone, answered: answers.length, scores, dominant, profil });
   }
   // Distribution des profils
-  const distribution = { micro: 0, eviteur: 0, lacheur: 0, efficace: 0 };
+  const distribution = { micro: 0, eviteur: 0, fantome: 0, patate: 0, corvees: 0, uniforme: 0, faux: 0, efficace: 0 };
   for (const r of results) {
     if (r.dominant) distribution[r.dominant]++;
   }
@@ -128,15 +195,15 @@ app.get('/api/admin/:secret/export/csv', (req, res) => {
   const students = stmts.getAllStudents.all();
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename=delegation-results.csv');
-  let csv = '\uFEFFNom,Telephone,Micro-Manager,Eviteur,Lacheur,Efficace,Profil Dominant\n';
+  let csv = '\uFEFFNom,Telephone,Micro-Manager,Eviteur-Sauveur,Fantome,Lanceur-Patate,Corvees,One-Size,Faux-Delegateur,Profil Dominant\n';
   for (const s of students) {
     const answers = stmts.getAnswersForStudent.all(s.id);
     if (answers.length === 0) {
-      csv += `"${s.name}","${s.phone}",,,,"Non répondu"\n`;
+      csv += `"${s.name}","${s.phone}",,,,,,,"Non répondu"\n`;
       continue;
     }
     const { scores, dominant } = computeProfile(answers);
-    csv += `"${s.name}","${s.phone}",${scores.micro},${scores.eviteur},${scores.lacheur},${scores.efficace},"${PROFILS[dominant].nom}"\n`;
+    csv += `"${s.name}","${s.phone}",${scores.micro},${scores.eviteur},${scores.fantome},${scores.patate},${scores.corvees},${scores.uniforme},${scores.faux},"${PROFILS[dominant].nom}"\n`;
   }
   res.send(csv);
 });
@@ -160,7 +227,7 @@ io.on('connection', (socket) => {
     const session = stmts.getSession.get();
     const answers = stmts.getAnswersForStudent.all(student.id);
     let profile = null;
-    if (session.status === 'results' && answers.length === 12) {
+    if (session.status === 'results' && answers.length === TOTAL_QUESTIONS) {
       profile = computeProfile(answers);
     }
 
@@ -182,7 +249,7 @@ io.on('connection', (socket) => {
       socket.emit('error', { message: 'La session n\'est pas active.' });
       return;
     }
-    if (questionIndex < 0 || questionIndex >= 12 || score < 1 || score > 5) {
+    if (questionIndex < 0 || questionIndex >= TOTAL_QUESTIONS || score < 1 || score > 5) {
       socket.emit('error', { message: 'Réponse invalide.' });
       return;
     }
@@ -193,12 +260,12 @@ io.on('connection', (socket) => {
     const count = stmts.getAnswerCount.get(socket.studentId).count;
     const total = stmts.getAllStudents.all().length;
     const allDone = stmts.getAllStudents.all().every(s => {
-      return stmts.getAnswerCount.get(s.id).count >= 12;
+      return stmts.getAnswerCount.get(s.id).count >= TOTAL_QUESTIONS;
     });
     io.to('admins').emit('admin:progress', {
       studentId: socket.studentId,
       answeredCount: count,
-      totalQuestions: 12,
+      totalQuestions: TOTAL_QUESTIONS,
       allStudentsDone: allDone,
     });
   });
@@ -246,7 +313,7 @@ io.on('connection', (socket) => {
     for (const s of students) {
       if (!s.socket_id) continue;
       const answers = stmts.getAnswersForStudent.all(s.id);
-      if (answers.length < 12) {
+      if (answers.length < TOTAL_QUESTIONS) {
         io.to(s.socket_id).emit('session:results', { profile: null, incomplete: true });
         continue;
       }

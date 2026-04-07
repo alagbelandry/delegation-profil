@@ -4,8 +4,19 @@ let studentPhone = '';
 let affirmations = [];
 let answers = {}; // { questionIndex: score }
 let submitted = false;
+const TOTAL_Q = 21;
 
 const SCORE_LABELS = ['', 'Pas du tout', 'Rarement', 'Parfois', 'Souvent', 'Tout à fait'];
+
+const COLORS = {
+  micro: '#C0392B', eviteur: '#E67E22', fantome: '#8E44AD', patate: '#E74C3C',
+  corvees: '#95A5A6', uniforme: '#3498DB', faux: '#1ABC9C',
+};
+const NAMES = {
+  micro: 'Micro-Manager', eviteur: 'Éviteur / Sauveur', fantome: 'Fantôme',
+  patate: 'Lanceur de Patate', corvees: 'Délégateur de Corvées',
+  uniforme: 'One-Size-Fits-All', faux: 'Faux Délégateur',
+};
 
 // ── Screens ──
 function showScreen(id) {
@@ -80,7 +91,6 @@ function renderQuestions() {
     `;
     list.appendChild(card);
 
-    // Listen for changes
     card.querySelectorAll('input[type=radio]').forEach(input => {
       input.addEventListener('change', () => {
         const score = parseInt(input.value);
@@ -98,11 +108,12 @@ function renderQuestions() {
 function updateProgress() {
   const count = Object.keys(answers).length;
   document.getElementById('progress-count').textContent = count;
-  document.getElementById('progress-fill').style.width = `${(count / 12) * 100}%`;
+  document.getElementById('progress-fill').style.width = `${(count / TOTAL_Q) * 100}%`;
+  document.getElementById('progress-total').textContent = TOTAL_Q;
 
   const submitArea = document.getElementById('submit-area');
   const submitBtn = document.getElementById('btn-submit');
-  if (count === 12) {
+  if (count === TOTAL_Q) {
     submitArea.classList.remove('hidden');
     submitBtn.disabled = false;
   } else {
@@ -111,7 +122,7 @@ function updateProgress() {
 }
 
 document.getElementById('btn-submit').addEventListener('click', () => {
-  if (Object.keys(answers).length < 12) return;
+  if (Object.keys(answers).length < TOTAL_Q) return;
   submitted = true;
   showScreen('screen-submitted');
 });
@@ -130,8 +141,6 @@ function renderResults(data) {
   }
 
   const p = data.profile;
-  const colors = { micro: '#C0392B', eviteur: '#E67E22', lacheur: '#8E44AD', efficace: '#27AE60' };
-  const names = { micro: 'Micro-Manager', eviteur: 'Éviteur', lacheur: 'Lâcheur', efficace: 'Efficace' };
 
   let barsHtml = '';
   for (const [key, score] of Object.entries(p.scores)) {
@@ -140,19 +149,24 @@ function renderResults(data) {
     barsHtml += `
       <div class="score-bar-item">
         <div class="score-bar-label">
-          <span style="${isDominant ? 'font-weight:700' : ''}">${names[key]}</span>
+          <span style="${isDominant ? 'font-weight:700' : ''}">${NAMES[key] || key}</span>
           <span>${score}/15</span>
         </div>
         <div class="score-bar-track">
-          <div class="score-bar-fill" style="width: ${pct}%; background: ${colors[key]};"></div>
+          <div class="score-bar-fill" style="width: ${pct}%; background: ${COLORS[key] || '#999'};"></div>
         </div>
       </div>
     `;
   }
 
+  const piegeHtml = p.profil.piege
+    ? `<div style="background:#fff3cd;border-left:4px solid #E67E22;padding:10px 14px;border-radius:0 10px 10px 0;margin-bottom:14px;text-align:left;font-size:0.85em;color:#856404;"><strong>${p.profil.piege}</strong></div>`
+    : '';
+
   el.innerHTML = `
     <div class="profile-emoji">${p.profil.emoji}</div>
     <div class="profile-badge" style="background: ${p.profil.couleur}">${p.profil.nom}</div>
+    ${piegeHtml}
     <div class="score-bars">${barsHtml}</div>
     <div class="profile-description">${p.profil.description}</div>
     <div class="profile-conseil"><strong>Conseil :</strong> ${p.profil.conseil}</div>
@@ -164,7 +178,6 @@ function renderResults(data) {
 socket.on('session:state', (data) => {
   if (data.studentName) studentName = data.studentName;
 
-  // Restore answers
   if (data.answers && data.answers.length > 0) {
     for (const a of data.answers) {
       answers[a.questionIndex] = a.score;
@@ -178,7 +191,7 @@ socket.on('session:state', (data) => {
 
   if (data.status === 'active') {
     renderQuestions();
-    if (Object.keys(answers).length === 12 && submitted) {
+    if (Object.keys(answers).length === TOTAL_Q && submitted) {
       showScreen('screen-submitted');
     } else {
       showScreen('screen-questions');
@@ -187,7 +200,7 @@ socket.on('session:state', (data) => {
   }
 
   if (data.status === 'closed') {
-    if (Object.keys(answers).length === 12) {
+    if (Object.keys(answers).length === TOTAL_Q) {
       showScreen('screen-submitted');
     } else {
       showScreen('screen-waiting');
@@ -196,7 +209,6 @@ socket.on('session:state', (data) => {
     return;
   }
 
-  // waiting
   showScreen('screen-waiting');
   document.getElementById('waiting-name').textContent = studentName;
 });
@@ -207,7 +219,7 @@ socket.on('session:opened', () => {
 });
 
 socket.on('session:closed', () => {
-  if (Object.keys(answers).length === 12) {
+  if (Object.keys(answers).length === TOTAL_Q) {
     showScreen('screen-submitted');
   }
 });

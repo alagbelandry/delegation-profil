@@ -121,9 +121,10 @@
     let sessionStatus = 'waiting';
     let studentProgress = {}; // { studentId: answeredCount }
 
-    const COLORS = { micro: '#C0392B', eviteur: '#E67E22', lacheur: '#8E44AD', efficace: '#27AE60' };
-    const NAMES = { micro: 'Micro-Manager', eviteur: 'Éviteur', lacheur: 'Lâcheur', efficace: 'Efficace' };
-    const EMOJIS = { micro: '🔍', eviteur: '🏃', lacheur: '👻', efficace: '🎯' };
+    const TOTAL_Q = 21;
+    const COLORS = { micro: '#C0392B', eviteur: '#E67E22', fantome: '#8E44AD', patate: '#E74C3C', corvees: '#95A5A6', uniforme: '#3498DB', faux: '#1ABC9C', efficace: '#27AE60' };
+    const NAMES = { micro: 'Micro-Manager', eviteur: 'Éviteur / Sauveur', fantome: 'Fantôme', patate: 'Lanceur de Patate', corvees: 'Délég. Corvées', uniforme: 'One-Size-Fits-All', faux: 'Faux Délégateur', efficace: 'Efficace' };
+    const EMOJIS = { micro: '🔍', eviteur: '🏃', fantome: '👻', patate: '🥔', corvees: '🗑️', uniforme: '📏', faux: '🎭', efficace: '🎯' };
 
     socket.emit('admin:join', { secret });
 
@@ -182,10 +183,10 @@
       }
       list.innerHTML = students.map(s => {
         const count = studentProgress[s.id] || 0;
-        const isDone = count >= 12;
+        const isDone = count >= TOTAL_Q;
         return `<div class="student-item">
           <span class="student-name">${s.name}</span>
-          <span class="student-progress ${isDone ? 'done' : ''}">${isDone ? '✓ Terminé' : count + '/12'}</span>
+          <span class="student-progress ${isDone ? 'done' : ''}">${isDone ? '✓ Terminé' : count + '/' + TOTAL_Q}</span>
         </div>`;
       }).join('');
 
@@ -219,28 +220,18 @@
         content.innerHTML = '<p style="color:#666;">Aucun résultat.</p>';
         return;
       }
-      let html = `<table class="results-table">
-        <tr>
-          <th>Nom</th>
-          <th>Micro-Manager</th>
-          <th>Éviteur</th>
-          <th>Lâcheur</th>
-          <th>Efficace</th>
-          <th>Profil dominant</th>
-        </tr>`;
+      const cats = ['micro', 'eviteur', 'fantome', 'patate', 'corvees', 'uniforme', 'faux'];
+      let html = `<table class="results-table"><tr><th>Nom</th>`;
+      for (const c of cats) html += `<th style="font-size:0.75em">${EMOJIS[c]}<br>${NAMES[c]}</th>`;
+      html += `<th>Profil dominant</th></tr>`;
       for (const r of data.results) {
         if (!r.scores) {
-          html += `<tr><td>${r.name}</td><td colspan="5" style="color:#666;">Non répondu</td></tr>`;
+          html += `<tr><td>${r.name}</td><td colspan="${cats.length + 1}" style="color:#666;">Non répondu</td></tr>`;
           continue;
         }
-        html += `<tr>
-          <td><strong>${r.name}</strong></td>
-          <td>${r.scores.micro}/15</td>
-          <td>${r.scores.eviteur}/15</td>
-          <td>${r.scores.lacheur}/15</td>
-          <td>${r.scores.efficace}/15</td>
-          <td><span class="profile-chip" style="background:${COLORS[r.dominant]}">${EMOJIS[r.dominant]} ${NAMES[r.dominant]}</span></td>
-        </tr>`;
+        html += `<tr><td><strong>${r.name}</strong></td>`;
+        for (const c of cats) html += `<td>${r.scores[c]}/15</td>`;
+        html += `<td><span class="profile-chip" style="background:${COLORS[r.dominant]}">${EMOJIS[r.dominant]} ${NAMES[r.dominant]}</span></td></tr>`;
       }
       html += '</table>';
       content.innerHTML = html;
