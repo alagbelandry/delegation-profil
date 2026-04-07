@@ -6,7 +6,7 @@ let answers = {}; // { questionIndex: score }
 let submitted = false;
 const TOTAL_Q = 21;
 
-const SCORE_LABELS = ['', 'Pas du tout', 'Rarement', 'Parfois', 'Souvent', 'Tout à fait'];
+const SCORE_LABELS = ['', 'Pas du tout', 'Plutôt non', 'Plutôt oui', 'Tout à fait'];
 
 const COLORS = {
   micro: '#C0392B', eviteur: '#E67E22', fantome: '#8E44AD', patate: '#E74C3C',
@@ -78,7 +78,7 @@ function renderQuestions() {
         ${aff.text}
       </div>
       <div class="likert">
-        ${[1, 2, 3, 4, 5].map(s => `
+        ${[1, 2, 3, 4].map(s => `
           <div class="likert-option">
             <input type="radio" name="q${i}" id="q${i}_${s}" value="${s}" ${answers[i] === s ? 'checked' : ''}>
             <label for="q${i}_${s}">
@@ -144,13 +144,13 @@ function renderResults(data) {
 
   let barsHtml = '';
   for (const [key, score] of Object.entries(p.scores)) {
-    const pct = (score / 15) * 100;
+    const pct = (score / 12) * 100;
     const isDominant = key === p.dominant;
     barsHtml += `
       <div class="score-bar-item">
         <div class="score-bar-label">
           <span style="${isDominant ? 'font-weight:700' : ''}">${NAMES[key] || key}</span>
-          <span>${score}/15</span>
+          <span>${score}/12</span>
         </div>
         <div class="score-bar-track">
           <div class="score-bar-fill" style="width: ${pct}%; background: ${COLORS[key] || '#999'};"></div>

@@ -19,7 +19,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     student_id INTEGER NOT NULL,
     question_index INTEGER NOT NULL,
-    score INTEGER NOT NULL CHECK(score BETWEEN 1 AND 5),
+    score INTEGER NOT NULL CHECK(score BETWEEN 1 AND 4),
     answered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(student_id, question_index),
     FOREIGN KEY (student_id) REFERENCES students(id)

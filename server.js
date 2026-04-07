@@ -131,8 +131,8 @@ function computeProfile(answers) {
   // Le profil dominant est le piège avec le score le plus élevé
   const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
   const maxScore = sorted[0][1];
-  // Si le score max est <= 9 (moyenne de 3/5), on considère "efficace"
-  const dominant = maxScore <= 9 ? 'efficace' : sorted[0][0];
+  // Si le score max est <= 7 (moyenne ~2.3/4), on considère "efficace"
+  const dominant = maxScore <= 7 ? 'efficace' : sorted[0][0];
   return { scores, dominant, profil: PROFILS[dominant] };
 }
 
@@ -249,7 +249,7 @@ io.on('connection', (socket) => {
       socket.emit('error', { message: 'La session n\'est pas active.' });
       return;
     }
-    if (questionIndex < 0 || questionIndex >= TOTAL_QUESTIONS || score < 1 || score > 5) {
+    if (questionIndex < 0 || questionIndex >= TOTAL_QUESTIONS || score < 1 || score > 4) {
       socket.emit('error', { message: 'Réponse invalide.' });
       return;
     }

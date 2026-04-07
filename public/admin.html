@@ -230,7 +230,7 @@
           continue;
         }
         html += `<tr><td><strong>${r.name}</strong></td>`;
-        for (const c of cats) html += `<td>${r.scores[c]}/15</td>`;
+        for (const c of cats) html += `<td>${r.scores[c]}/12</td>`;
         html += `<td><span class="profile-chip" style="background:${COLORS[r.dominant]}">${EMOJIS[r.dominant]} ${NAMES[r.dominant]}</span></td></tr>`;
       }
       html += '</table>';
