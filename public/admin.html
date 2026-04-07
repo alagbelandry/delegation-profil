@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Auto-évaluation Délégation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #1a1a2e; color: #e0e0e0; min-height: 100vh; }
+
+    .header { background: #16213e; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { font-size: 1.3em; color: #3498db; }
+    .header .status { display: flex; gap: 16px; align-items: center; }
+    .badge { padding: 6px 14px; border-radius: 20px; font-size: 0.8em; font-weight: 600; }
+    .badge-waiting { background: #f39c12; color: #1a1a2e; }
+    .badge-active { background: #27AE60; color: white; }
+    .badge-closed { background: #C0392B; color: white; }
+    .badge-results { background: #3498db; color: white; }
+
+    .stats { display: flex; gap: 12px; padding: 16px 30px; background: #16213e; border-bottom: 1px solid #2a2a4a; }
+    .stat { background: #0f3460; padding: 12px 20px; border-radius: 10px; text-align: center; flex: 1; }
+    .stat .num { font-size: 2em; font-weight: 700; color: #3498db; }
+    .stat .label { font-size: 0.75em; color: #888; margin-top: 2px; }
+
+    .controls { display: flex; gap: 10px; padding: 16px 30px; flex-wrap: wrap; }
+    .btn { padding: 12px 24px; border: none; border-radius: 10px; font-size: 0.9em; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-green { background: #27AE60; color: white; }
+    .btn-red { background: #C0392B; color: white; }
+    .btn-blue { background: #3498db; color: white; }
+    .btn-orange { background: #E67E22; color: white; }
+    .btn-dark { background: #2a2a4a; color: #ccc; }
+
+    .main { padding: 20px 30px; }
+
+    /* Dashboard */
+    .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .panel { background: #16213e; border-radius: 12px; padding: 20px; }
+    .panel h3 { color: #3498db; margin-bottom: 12px; font-size: 1em; }
+
+    /* Student list */
+    .student-list { max-height: 300px; overflow-y: auto; }
+    .student-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; }
+    .student-item:nth-child(even) { background: #0f3460; }
+    .student-name { font-weight: 600; font-size: 0.9em; }
+    .student-progress { font-size: 0.8em; color: #888; }
+    .student-progress.done { color: #27AE60; font-weight: 600; }
+
+    /* Distribution chart */
+    .dist-bar { display: flex; align-items: center; margin-bottom: 10px; gap: 12px; }
+    .dist-label { width: 140px; font-size: 0.85em; font-weight: 600; }
+    .dist-track { flex: 1; height: 30px; background: #0f3460; border-radius: 8px; overflow: hidden; position: relative; }
+    .dist-fill { height: 100%; border-radius: 8px; transition: width 0.5s; display: flex; align-items: center; justify-content: center; }
+    .dist-fill span { font-size: 0.8em; font-weight: 700; }
+
+    /* Results table */
+    .results-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+    .results-table th { background: #0f3460; padding: 10px; text-align: left; color: #3498db; }
+    .results-table td { padding: 8px 10px; border-bottom: 1px solid #2a2a4a; }
+    .results-table tr:hover { background: #0f3460; }
+    .profile-chip { padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 600; color: white; }
+
+    .full-width { grid-column: 1 / -1; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Admin — Profil de Délégation</h1>
+    <div class="status">
+      <span class="badge" id="status-badge">En attente</span>
+      <span id="connected-info" style="font-size:0.8em; color:#888;">0 connectés</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="num" id="stat-connected">0</div><div class="label">Connectés</div></div>
+    <div class="stat"><div class="num" id="stat-total">0</div><div class="label">Inscrits</div></div>
+    <div class="stat"><div class="num" id="stat-done">0</div><div class="label">Terminé</div></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-green" id="btn-open">Ouvrir la session</button>
+    <button class="btn btn-red" id="btn-close" disabled>Fermer la session</button>
+    <button class="btn btn-blue" id="btn-results" disabled>Afficher les résultats</button>
+    <button class="btn btn-dark" id="btn-export">Exporter CSV</button>
+    <button class="btn btn-orange" id="btn-reset-answers">Reset réponses</button>
+    <button class="btn btn-red" id="btn-reset-all">Reset tout</button>
+  </div>
+
+  <div class="main">
+    <div class="dashboard">
+      <div class="panel" id="panel-students">
+        <h3>Participants</h3>
+        <div class="student-list" id="student-list">
+          <p style="color:#666; font-size:0.85em;">Aucun participant pour le moment.</p>
+        </div>
+      </div>
+      <div class="panel" id="panel-distribution">
+        <h3>Distribution des profils</h3>
+        <div id="distribution-chart">
+          <p style="color:#666; font-size:0.85em;">Les résultats apparaîtront ici.</p>
+        </div>
+      </div>
+      <div class="panel full-width" id="panel-results">
+        <h3>Résultats détaillés</h3>
+        <div id="results-content">
+          <p style="color:#666; font-size:0.85em;">Cliquez sur "Afficher les résultats" pour voir le détail.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const params = new URLSearchParams(window.location.search);
+    const secret = params.get('secret') || 'sikatech';
+
+    let sessionStatus = 'waiting';
+    let studentProgress = {}; // { studentId: answeredCount }
+
+    const COLORS = { micro: '#C0392B', eviteur: '#E67E22', lacheur: '#8E44AD', efficace: '#27AE60' };
+    const NAMES = { micro: 'Micro-Manager', eviteur: 'Éviteur', lacheur: 'Lâcheur', efficace: 'Efficace' };
+    const EMOJIS = { micro: '🔍', eviteur: '🏃', lacheur: '👻', efficace: '🎯' };
+
+    socket.emit('admin:join', { secret });
+
+    // ── Status ──
+    function updateStatusBadge(status) {
+      sessionStatus = status;
+      const badge = document.getElementById('status-badge');
+      const map = {
+        waiting: ['En attente', 'badge-waiting'],
+        active: ['Session ouverte', 'badge-active'],
+        closed: ['Session fermée', 'badge-closed'],
+        results: ['Résultats', 'badge-results'],
+      };
+      const [text, cls] = map[status] || ['Inconnu', 'badge-waiting'];
+      badge.textContent = text;
+      badge.className = 'badge ' + cls;
+
+      document.getElementById('btn-open').disabled = (status !== 'waiting');
+      document.getElementById('btn-close').disabled = (status !== 'active');
+      document.getElementById('btn-results').disabled = (status !== 'active' && status !== 'closed');
+    }
+
+    // ── Controls ──
+    document.getElementById('btn-open').addEventListener('click', () => {
+      socket.emit('admin:open-session');
+    });
+    document.getElementById('btn-close').addEventListener('click', () => {
+      socket.emit('admin:close-session');
+    });
+    document.getElementById('btn-results').addEventListener('click', () => {
+      socket.emit('admin:show-results');
+      loadResults();
+    });
+    document.getElementById('btn-export').addEventListener('click', () => {
+      window.open(`/api/admin/${secret}/export/csv`, '_blank');
+    });
+    document.getElementById('btn-reset-answers').addEventListener('click', () => {
+      if (!confirm('Supprimer toutes les réponses ?')) return;
+      socket.emit('admin:reset-answers');
+      studentProgress = {};
+    });
+    document.getElementById('btn-reset-all').addEventListener('click', () => {
+      if (!confirm('Supprimer TOUT (participants + réponses) ?')) return;
+      socket.emit('admin:reset-all');
+      studentProgress = {};
+    });
+
+    // ── Load students ──
+    async function loadStudents() {
+      const res = await fetch(`/api/admin/${secret}/students`);
+      const students = await res.json();
+      const list = document.getElementById('student-list');
+      if (students.length === 0) {
+        list.innerHTML = '<p style="color:#666; font-size:0.85em;">Aucun participant.</p>';
+        return;
+      }
+      list.innerHTML = students.map(s => {
+        const count = studentProgress[s.id] || 0;
+        const isDone = count >= 12;
+        return `<div class="student-item">
+          <span class="student-name">${s.name}</span>
+          <span class="student-progress ${isDone ? 'done' : ''}">${isDone ? '✓ Terminé' : count + '/12'}</span>
+        </div>`;
+      }).join('');
+
+      document.getElementById('stat-total').textContent = students.length;
+      document.getElementById('stat-done').textContent = students.filter(s => (studentProgress[s.id] || 0) >= 12).length;
+    }
+
+    // ── Load results ──
+    async function loadResults() {
+      const res = await fetch(`/api/admin/${secret}/results`);
+      const data = await res.json();
+
+      // Distribution chart
+      const total = Object.values(data.distribution).reduce((a, b) => a + b, 0) || 1;
+      const distEl = document.getElementById('distribution-chart');
+      distEl.innerHTML = Object.entries(data.distribution).map(([key, count]) => {
+        const pct = Math.round((count / total) * 100);
+        return `<div class="dist-bar">
+          <div class="dist-label">${EMOJIS[key]} ${NAMES[key]}</div>
+          <div class="dist-track">
+            <div class="dist-fill" style="width:${pct}%; background:${COLORS[key]};">
+              <span>${count} (${pct}%)</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+      // Results table
+      const content = document.getElementById('results-content');
+      if (data.results.length === 0) {
+        content.innerHTML = '<p style="color:#666;">Aucun résultat.</p>';
+        return;
+      }
+      let html = `<table class="results-table">
+        <tr>
+          <th>Nom</th>
+          <th>Micro-Manager</th>
+          <th>Éviteur</th>
+          <th>Lâcheur</th>
+          <th>Efficace</th>
+          <th>Profil dominant</th>
+        </tr>`;
+      for (const r of data.results) {
+        if (!r.scores) {
+          html += `<tr><td>${r.name}</td><td colspan="5" style="color:#666;">Non répondu</td></tr>`;
+          continue;
+        }
+        html += `<tr>
+          <td><strong>${r.name}</strong></td>
+          <td>${r.scores.micro}/15</td>
+          <td>${r.scores.eviteur}/15</td>
+          <td>${r.scores.lacheur}/15</td>
+          <td>${r.scores.efficace}/15</td>
+          <td><span class="profile-chip" style="background:${COLORS[r.dominant]}">${EMOJIS[r.dominant]} ${NAMES[r.dominant]}</span></td>
+        </tr>`;
+      }
+      html += '</table>';
+      content.innerHTML = html;
+    }
+
+    // ── Socket events ──
+    socket.on('session:state', (data) => {
+      updateStatusBadge(data.status);
+      document.getElementById('stat-connected').textContent = data.connectedCount || 0;
+      document.getElementById('stat-total').textContent = data.totalStudents || 0;
+      document.getElementById('connected-info').textContent = `${data.connectedCount || 0} connectés`;
+      loadStudents();
+    });
+
+    socket.on('session:status', ({ status }) => {
+      updateStatusBadge(status);
+      if (status === 'results') loadResults();
+    });
+
+    socket.on('admin:student-connected', ({ name, connectedCount }) => {
+      document.getElementById('stat-connected').textContent = connectedCount;
+      document.getElementById('connected-info').textContent = `${connectedCount} connectés`;
+      loadStudents();
+    });
+
+    socket.on('admin:student-disconnected', ({ connectedCount }) => {
+      document.getElementById('stat-connected').textContent = connectedCount;
+      document.getElementById('connected-info').textContent = `${connectedCount} connectés`;
+    });
+
+    socket.on('admin:progress', ({ studentId, answeredCount, totalQuestions, allStudentsDone }) => {
+      studentProgress[studentId] = answeredCount;
+      document.getElementById('stat-done').textContent =
+        Object.values(studentProgress).filter(c => c >= 12).length;
+      loadStudents();
+    });
+
+    // Initial load
+    setInterval(loadStudents, 10000);
+  </script>
+</body>
+</html>

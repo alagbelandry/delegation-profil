@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auto-évaluation Délégation</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <div class="header">
+    <h1>Mon profil de délégation</h1>
+    <p>Séance 8 — Déléguer avec succès</p>
+  </div>
+
+  <!-- SCREEN 1: Login -->
+  <div id="screen-login" class="container">
+    <div class="card">
+      <h2>Identification</h2>
+      <div class="form-group">
+        <label>Votre nom complet</label>
+        <input type="text" id="input-name" placeholder="Prénom Nom" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label>Numéro de téléphone</label>
+        <input type="tel" id="input-phone" placeholder="06 12 34 56 78" autocomplete="tel">
+      </div>
+      <button class="btn btn-primary" id="btn-login">Se connecter</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Waiting for admin -->
+  <div id="screen-waiting" class="container hidden">
+    <div class="card waiting-screen">
+      <div class="pulse"></div>
+      <h2>Bienvenue <span id="waiting-name"></span> !</h2>
+      <p>En attente de l'ouverture de la session par le formateur...</p>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: Questions -->
+  <div id="screen-questions" class="hidden">
+    <div class="progress-bar">
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+      </div>
+      <div class="progress-text"><span id="progress-count">0</span>/12 réponses</div>
+    </div>
+    <div class="container" id="questions-list"></div>
+    <div class="submit-area hidden" id="submit-area">
+      <button class="btn btn-primary" id="btn-submit" disabled>Valider mes réponses (12/12)</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: Submitted, waiting results -->
+  <div id="screen-submitted" class="container hidden">
+    <div class="card waiting-screen">
+      <div class="pulse" style="background: #27AE60;"></div>
+      <h2>Réponses envoyées !</h2>
+      <p>En attente de l'affichage des résultats par le formateur...</p>
+    </div>
+  </div>
+
+  <!-- SCREEN 5: Results -->
+  <div id="screen-results" class="container hidden">
+    <div class="card result-card" id="result-content"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/student-app.js"></script>
+</body>
+</html>
